@@ -64,7 +64,8 @@ deps:
 render:
 	@echo ">>> Rendering via $(RENDER_PLAYBOOK) (calls your render role)"
 	@mkdir -p "$(ANSIBLE_DIR)/build"
-	@cd "$(ANSIBLE_DIR)" && -e @$$(basename "$(VARS)") $$(basename "$(RENDER_PLAYBOOK)")
+	@cd "$(ANSIBLE_DIR)" && "$(ANSIBLE_PLAYBOOK)" -e @$$(basename "$(VARS)") $$(basename "$(RENDER_PLAYBOOK)")
+
 
 # 4) Stage 2: run the rendered playbook
 # ansible-vault encrypt_string --ask-vault-pass 'ghp_yourRealTokenHere' --name github_tokendeploy:
