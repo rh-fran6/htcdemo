@@ -1,0 +1,331 @@
+---
+- name: Bootstrap Argo CD with OpenShift OAuth + RBAC + Git trust/creds
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  collections:
+    - kubernetes.core
+
+  tasks:
+{# --------------------- NAMESPACES (core) --------------------- #}
+{% for ns in [argocd_namespace, app_a_namespace, target_namespace] %}
+    - name: Ensure namespace {{ ns }} exists
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ ns }}"
+{% endfor %}
+
+{# --------------------- NAMESPACES (apps list) --------------------- #}
+{% for ns in apps_namespaces | default([]) %}
+    - name: Ensure namespace {{ ns }} exists
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ ns }}"
+{% endfor %}
+
+{# --------------------- OPTIONAL: INSTALL OPENSHIFT GITOPS OPERATOR --------------------- #}
+{% if install_gitops_operator | default(false) %}
+    - name: Ensure operator namespace openshift-operators exists
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "openshift-operators"
+
+    - name: Ensure global OperatorGroup exists (cluster-scoped operators)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: operators.coreos.com/v1
+          kind: OperatorGroup
+          metadata:
+            name: global-operators
+            namespace: "openshift-operators"
+          spec: {}
+
+    - name: Subscribe to OpenShift GitOps operator
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: operators.coreos.com/v1alpha1
+          kind: Subscription
+          metadata:
+            name: redhat-openshift-gitops
+            namespace: openshift-operators
+          spec:
+            channel: "{{ gitops_channel | default('stable') }}"
+            name: openshift-gitops-operator
+            source: "{{ gitops_source | default('redhat-operators') }}"
+            sourceNamespace: "{{ gitops_source_namespace | default('openshift-marketplace') }}"
+            installPlanApproval: "{{ gitops_approval | default('Automatic') }}"
+
+    - name: Wait for ArgoCD CRD to be established
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig }}"
+        api_version: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        name: argocds.argoproj.io
+      register: argocd_crd
+      retries: 60
+      delay: 10
+      until: argocd_crd.resources | length > 0
+{% endif %}
+
+{# --------------------- ARGOCd INSTANCE --------------------- #}
+    - name: Create/Update Argo CD instance (OpenShift OAuth only; disable local admin; RBAC)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: ArgoCD
+          metadata:
+            name: openshift-gitops
+            namespace: "{{ argocd_namespace }}"
+          spec:
+            server:
+              route:
+                enabled: true
+            dex:
+              openShiftOAuth: true
+            config:
+              admin.enabled: "false"
+            rbac:
+              scopes: '{{ rbac_scopes }}'
+              defaultPolicy: '{{ rbac_default_policy }}'
+              policy: |
+{# Build Casbin policy lines with consistent indentation under the block scalar #}
+{% set lines = [] -%}
+{% for g in rbac_groups | default([]) -%}
+{% set _ = lines.append('g, group:' ~ g.name ~ ', role:' ~ g.role) -%}
+{% endfor -%}
+{% for r in rbac_roles | default([]) -%}
+{% for p in r.permissions | default([]) -%}
+{% set _ = lines.append('p, role:' ~ r.name ~ ', ' ~ p.resource ~ ', ' ~ p.action ~ ', ' ~ p.object ~ ', allow') -%}
+{% endfor -%}
+{% endfor -%}
+                {{ lines | join('\n') | indent(16, true) }}
+
+    - name: Wait for Argo CD repo-server to be available
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeconfig }}"
+        api_version: apps/v1
+        kind: Deployment
+        namespace: "{{ argocd_namespace }}"
+        name: "{{ argocd_namespace }}-server"
+      register: repo_dep
+      retries: 60
+      delay: 10
+      until: >
+        repo_dep.resources | length > 0 and
+        repo_dep.resources[0].status.availableReplicas is defined and
+        repo_dep.resources[0].status.availableReplicas | int > 0
+
+{# --------------------- OPENSHIFT GROUPS --------------------- #}
+{% for g in rbac_groups | default([]) %}
+    - name: Ensure OpenShift group {{ g.name }} exists
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: user.openshift.io/v1
+          kind: Group
+          metadata:
+            name: "{{ g.name }}"
+{% endfor %}
+
+{# --------------------- ARGO PROJECTS --------------------- #}
+    - name: Create Argo CD Project 'platform' (infra/operators)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: AppProject
+          metadata:
+            name: platform
+            namespace: "{{ argocd_namespace }}"
+          spec:
+            description: "Infra/operators/cluster config managed by DevOps"
+            destinations:
+              - namespace: "*"
+                server: https://kubernetes.default.svc
+            sourceRepos:
+              - '*'
+            clusterResourceWhitelist:
+              - group: '*'
+                kind: '*'
+            namespaceResourceWhitelist:
+              - group: '*'
+                kind: '*'
+
+    - name: Create Argo CD Project 'app-a' (workloads only in app-a namespace)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: AppProject
+          metadata:
+            name: app-a
+            namespace: "{{ argocd_namespace }}"
+          spec:
+            description: "Application A workloads"
+            destinations:
+              - namespace: "{{ app_a_namespace }}"
+                server: https://kubernetes.default.svc
+            sourceRepos:
+              - '*'
+            clusterResourceWhitelist:
+              - group: ''
+                kind: Namespace
+            namespaceResourceWhitelist:
+              - group: '*'
+                kind: '*'
+
+    - name: Create Argo CD Project 'apps' (business apps, NOC read-only)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: AppProject
+          metadata:
+            name: apps
+            namespace: "{{ argocd_namespace }}"
+          spec:
+            description: "Business app workloads (NOC read-only)"
+            destinations:
+              - namespace: "{{ app_a_namespace }}"
+                server: https://kubernetes.default.svc
+{% for ns in apps_namespaces | default([]) %}
+              - namespace: "{{ ns }}"
+                server: https://kubernetes.default.svc
+{% endfor %}
+            sourceRepos:
+              - '*'
+            clusterResourceWhitelist:
+              - group: ''
+                kind: Namespace
+            namespaceResourceWhitelist:
+              - group: '*'
+                kind: '*'
+
+{# --------------------- GITHUB TLS → ARGO TRUST --------------------- #}
+    - name: Fetch GitHub TLS certificate chain (PEM)
+      ansible.builtin.shell: |
+        set -o pipefail
+        echo -n | openssl s_client -servername {{ github_host }} -connect {{ github_host }}:443 -showcerts 2>/dev/null \
+          | sed -n '/BEGIN CERTIFICATE/,/END CERTIFICATE/p'
+      args:
+        executable: /bin/bash
+      register: github_pem
+      changed_when: false
+
+    - name: Fail if certificate not retrieved
+      ansible.builtin.fail:
+        msg: "Could not retrieve certificate from {{ github_host }}"
+      when: github_pem.stdout is not search('BEGIN CERTIFICATE')
+
+    - name: Inject GitHub cert into Argo CD trust (argocd-tls-certs-cm)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: argocd-tls-certs-cm
+            namespace: "{{ argocd_namespace }}"
+            labels:
+              app.kubernetes.io/name: argocd-tls-certs-cm
+              app.kubernetes.io/part-of: argocd
+          data:
+            "{{ github_host }}": "{% raw %}{{ github_pem.stdout }}{% endraw %}"
+
+{# --------------------- ARGO REPO CREDENTIALS --------------------- #}
+    - name: Add GitHub repo credentials to Argo CD
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-repo-credentials
+            namespace: "{{ argocd_namespace }}"
+            labels:
+              argocd.argoproj.io/secret-type: repository
+          type: Opaque
+          stringData:
+            type: git
+            url: "{{ github_repo_url }}"
+            username: "{{ github_username }}"
+            password: "{% raw %}{{ github_token }}{% endraw %}"
+
+{# --------------------- OPTIONAL: WORKLOAD GITHUB SECRET --------------------- #}
+{% if create_workload_github_secret %}
+    - name: Create GitHub token Secret for workloads
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: github-token
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            token: "{{ github_token }}"
+            username: "{{ github_username }}"
+{% endif %}
+
+{# --------------------- APP-OF-APPS (ONE PARENT APP) --------------------- #}
+{% if bootstrap_enabled | default(true) %}
+    - name: Create bootstrap App-of-Apps (triggers infra + app-a workloads)
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: "{{ bootstrap_app_name }}"
+            namespace: "{{ argocd_namespace }}"
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: "{{ bootstrap_project }}"
+            source:
+              repoURL: "{{ bootstrap_repo_url }}"
+              targetRevision: "{{ bootstrap_target_revision }}"
+              path: "charts/platform-umbrella" 
+              helm:
+                releaseName: platform-umbrella
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ argocd_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+{% endif %}

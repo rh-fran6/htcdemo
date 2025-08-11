@@ -1,0 +1,72 @@
+kubeconfig: "~/.kube/config"
+
+# venv + paths
+venv_path: ".venv"
+collections_path: "./collections"
+rendered_playbook_path: "./build/generated-playbook.yaml"
+
+install_gitops_operator: true
+gitops_channel: gitops-1.17
+gitops_source: redhat-operators
+gitops_source_namespace: openshift-marketplace
+gitops_approval: Automatic
+
+# Namespaces
+argocd_namespace: "openshift-gitops"
+app_a_namespace: "app-a"
+apps_namespaces: 
+  - "app-b"
+  - "app-c"
+target_namespace: "my-apps"
+
+# Git host + repo creds
+create_workload_github_secret: false 
+github_host: "github.com"
+github_repo_url: "https://github.com/rh-fran6/htcdemo.git"
+github_username: "rh-fran6"
+github_token: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63323836633631333732356566363566643862336466306165316132343238343463663665346632
+          3364373966636537646131316665366436313366336264340a343363636166313536353666616434
+          34343234343237333839303366396438353133343134353337643239383062353733323566373935
+          3064616132356162650a613761646265646464653730633266356233366562616562373863663635
+          31623431323038343334333039383365316265643366656239653565333262316161623566626365
+          3030636530313335383166616230373933643863656634613844
+
+# Argo CD RBAC (parameterized)
+rbac_scopes: "[groups]"
+rbac_default_policy: "role:readonly"
+rbac_groups:
+  - { name: "admin-team", role: "admin" }
+  - { name: "devops-team", role: "devops" }
+  - { name: "app-a-team", role: "app-a" }
+  - { name: "noc-team",   role: "noc" }
+rbac_roles:
+  - name: "devops"
+    permissions:
+      - { resource: "applications", action: "*",     object: "platform/*" }
+      - { resource: "projects",     action: "get",   object: "platform" }
+      - { resource: "clusters",     action: "*",     object: "*" }
+      - { resource: "repositories", action: "*",     object: "*" }
+      - { resource: "logs",         action: "get",   object: "*" }
+      - { resource: "exec",         action: "create",object: "*" }
+      - { resource: "certificates", action: "*",     object: "*" }
+      - { resource: "accounts",     action: "get",   object: "*" }
+      - { resource: "gpgkeys",      action: "*",     object: "*" }
+  - name: "app-a"
+    permissions:
+      - { resource: "applications", action: "get",  object: "app-a/*" }
+      - { resource: "applications", action: "sync", object: "app-a/*" }
+      - { resource: "projects",     action: "get",  object: "app-a" }
+  - name: "noc"
+    permissions:
+      - { resource: "applications", action: "get",  object: "apps/*" }
+      - { resource: "projects",     action: "get",  object: "apps" }
+
+bootstrap_enabled: true
+bootstrap_app_name: "bootstrap"
+bootstrap_repo_url: "{{ github_repo_url }}" 
+bootstrap_target_revision: "main"
+bootstrap_path: "bootstrap"                  
+bootstrap_project: "platform"               
+

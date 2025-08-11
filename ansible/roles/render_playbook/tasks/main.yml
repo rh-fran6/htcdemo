@@ -1,0 +1,15 @@
+---
+- name: Ensure build and collections dirs exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ rendered_playbook_path | default('./build/generated-playbook.yaml') | dirname }}"
+    - "{{ collections_path | default('./collections') }}"
+
+- name: Render full playbook from Jinja2 template
+  ansible.builtin.template:
+    src: site.yaml.j2              
+    dest: "{{ rendered_playbook_path | default('./build/generated-playbook.yaml') }}"
+    mode: "0644"
