@@ -15,7 +15,7 @@ argocd-apps:
       source:
         repoURL: *selfRepo
         targetRevision: *selfRev
-        path: operators/external-secrets-olm
+        path: clusterbootstrap/operators/external-secrets-olm
       destination:
         server: *dest
         namespace: openshift-operators
@@ -50,7 +50,7 @@ argocd-apps:
       source:
         repoURL: *selfRepo
         targetRevision: *selfRev
-        path: infra/oauth-okta
+        path: clusterbootstrap/infra/oauth-okta
       destination:
         server: *dest
         namespace: *ns
@@ -65,7 +65,7 @@ argocd-apps:
       source:
         repoURL: *selfRepo
         targetRevision: *selfRev
-        path: infra/cluster-autoscaler
+        path: clusterbootstrap/infra/cluster-autoscaler
       destination:
         server: *dest
         namespace: *ns
