@@ -4,3 +4,4 @@ ansible/build/
 ansible/collections/
 ansible/ansible.cfg
 archive/
+secrets/secrets.yaml

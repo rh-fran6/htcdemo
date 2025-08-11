@@ -4,6 +4,9 @@
   connection: local
   gather_facts: false
 
+  vars_files:
+    - ../../secrets/encrypted-secrets.yaml
+
   collections:
     - kubernetes.core
 
@@ -34,6 +37,34 @@
             name: "{{ ns }}"
 {% endfor %}
 
+    - name: Ensure AWS SM creds Secret exists (only when requested)
+      block:
+        - name: Ensure namespace 'external-secrets' exists
+          kubernetes.core.k8s:
+            api_version: v1
+            kind: Namespace
+            name: external-secrets
+            state: present
+            kubeconfig: "{{ kubeconfig | default('~/.kube/config') }}"
+    
+        - name: Create/Update aws-sm-creds Secret
+          kubernetes.core.k8s:
+            kubeconfig: "{{ kubeconfig | default('~/.kube/config') }}"
+            state: present
+            definition:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: aws-sm-creds
+                namespace: external-secrets
+              type: Opaque
+              stringData:
+                access-key-id:     "{% raw %}{{ secrets.access_key_id }}{% endraw %}"
+                secret-access-key: "{% raw %}{{ secrets.secret_access_key }}{% endraw %}"    
+          no_log: true
+      when: create_aws_sm_secret | default(false) | bool
+
+
 {# --------------------- OPTIONAL: INSTALL OPENSHIFT GITOPS OPERATOR --------------------- #}
 {% if install_gitops_operator | default(false) %}
     - name: Ensure operator namespace openshift-operators exists
@@ -46,18 +77,6 @@
           metadata:
             name: "openshift-operators"
 
-    - name: Ensure global OperatorGroup exists (cluster-scoped operators)
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig }}"
-        state: present
-        definition:
-          apiVersion: operators.coreos.com/v1
-          kind: OperatorGroup
-          metadata:
-            name: global-operators
-            namespace: "openshift-operators"
-          spec: {}
-
     - name: Subscribe to OpenShift GitOps operator
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig }}"
@@ -66,8 +85,8 @@
           apiVersion: operators.coreos.com/v1alpha1
           kind: Subscription
           metadata:
-            name: redhat-openshift-gitops
-            namespace: openshift-operators
+            name: openshift-gitops-operator
+            namespace: openshift-gitops-operator
           spec:
             channel: "{{ gitops_channel | default('stable') }}"
             name: openshift-gitops-operator
@@ -277,7 +296,7 @@
             type: git
             url: "{{ github_repo_url }}"
             username: "{{ github_username }}"
-            password: "{% raw %}{{ github_token }}{% endraw %}"
+            password: "{% raw %}{{ secrets.github_token }}{% endraw %}"
 
 {# --------------------- OPTIONAL: WORKLOAD GITHUB SECRET --------------------- #}
 {% if create_workload_github_secret %}
@@ -293,7 +312,7 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            token: "{{ github_token }}"
+            token: "{{ secrets.github_token }}"
             username: "{{ github_username }}"
 {% endif %}
 

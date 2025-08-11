@@ -24,14 +24,9 @@ create_workload_github_secret: false
 github_host: "github.com"
 github_repo_url: "https://github.com/rh-fran6/htcdemo.git"
 github_username: "rh-fran6"
-github_token: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          63323836633631333732356566363566643862336466306165316132343238343463663665346632
-          3364373966636537646131316665366436313366336264340a343363636166313536353666616434
-          34343234343237333839303366396438353133343134353337643239383062353733323566373935
-          3064616132356162650a613761646265646464653730633266356233366562616562373863663635
-          31623431323038343334333039383365316265643366656239653565333262316161623566626365
-          3030636530313335383166616230373933643863656634613844
+
+# External Secret Operator Backhaul to AWS SM
+create_aws_sm_secret: true
 
 # Argo CD RBAC (parameterized)
 rbac_scopes: "[groups]"
@@ -68,5 +63,9 @@ bootstrap_app_name: "bootstrap"
 bootstrap_repo_url: "{{ github_repo_url }}" 
 bootstrap_target_revision: "main"
 bootstrap_path: "bootstrap"                  
-bootstrap_project: "platform"               
+bootstrap_project: "platform"        
+
+
+
+
 
