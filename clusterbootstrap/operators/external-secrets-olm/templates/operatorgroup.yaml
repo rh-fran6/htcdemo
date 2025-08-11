@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: external-secrets-og
-  namespace: openshift-operators
+  namespace: external-secrets
 spec:
   targetNamespaces:
     - openshift-operators

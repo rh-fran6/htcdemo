@@ -1,0 +1,52 @@
+apiVersion: operator.external-secrets.io/v1alpha1
+kind: OperatorConfig
+metadata:
+  name: cluster
+  namespace: openshift-operators
+spec:
+  certController:
+    requeueInterval: 5m
+    prometheus:
+      enabled: false
+      service:
+        port: 8080
+    rbac:
+      create: true
+    image:
+      pullPolicy: IfNotPresent
+      repository: ghcr.io/external-secrets/external-secrets
+      tag: ''
+    create: true
+  createOperator: true
+  processClusterExternalSecret: true
+  prometheus:
+    enabled: false
+    service:
+      port: 8080
+  rbac:
+    create: true
+  processClusterStore: true
+  concurrent: 1
+  webhook:
+    certCheckInterval: 5m
+    certDir: /tmp/certs
+    prometheus:
+      enabled: false
+      service:
+        port: 8080
+    rbac:
+      create: true
+    replicaCount: 1
+    image:
+      pullPolicy: IfNotPresent
+      repository: ghcr.io/external-secrets/external-secrets
+      tag: ''
+  replicaCount: 1
+  image:
+    pullPolicy: IfNotPresent
+    repository: ghcr.io/external-secrets/external-secrets
+    tag: ''
+  crds:
+    createClusterExternalSecret: true
+    createClusterSecretStore: true
+  podAnnotations: {}
