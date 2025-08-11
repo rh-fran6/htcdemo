@@ -1,39 +1,32 @@
-# Common targets
-destServer: https://kubernetes.default.svc
-argocdNamespace: openshift-gitops
-appANamespace: app-a
+destServer: &dest https://kubernetes.default.svc
+argocdNamespace: &ns openshift-gitops
+appANamespace: &appA app-a
 
-# Where this umbrella lives (your Git repo)
-selfRepoURL: https://github.com/rh-fran6/htcdemo.git
-selfRev: main
+selfRepoURL: &selfRepo https://github.com/rh-fran6/htcdemo.git
+selfRev: &selfRev main
 
 argocd-apps:
   applications:
-
-    # 1) External Secrets Operator (OLM install from OperatorHub) – infra
     - name: eso-operator-olm
-      namespace: {{ .Values.argocdNamespace }}
+      namespace: *ns
       project: platform
-      annotations:
-        argocd.argoproj.io/sync-wave: "-2"
+      annotations: { argocd.argoproj.io/sync-wave: "-2" }
       finalizers: [resources-finalizer.argocd.argoproj.io]
       source:
-        repoURL: {{ .Values.selfRepoURL }}
-        targetRevision: {{ .Values.selfRev }}
+        repoURL: *selfRepo
+        targetRevision: *selfRev
         path: operators/external-secrets-olm
       destination:
-        server: {{ .Values.destServer }}
+        server: *dest
         namespace: openshift-operators
       syncPolicy:
         automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
 
-    # 2) External Secrets instance (use upstream Helm chart) – infra
     - name: eso-instance
-      namespace: {{ .Values.argocdNamespace }}
+      namespace: *ns
       project: platform
-      annotations:
-        argocd.argoproj.io/sync-wave: "0"
+      annotations: { argocd.argoproj.io/sync-wave: "0" }
       finalizers: [resources-finalizer.argocd.argoproj.io]
       source:
         repoURL: https://charts.external-secrets.io
@@ -42,54 +35,47 @@ argocd-apps:
         helm:
           values: |
             installCRDs: true
-            # add your SecretStore/ClusterSecretStore via extraManifests if desired
       destination:
-        server: {{ .Values.destServer }}
+        server: *dest
         namespace: external-secrets
       syncPolicy:
         automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
 
-    # 3) Okta IdP (cluster OAuth CR) – infra
     - name: oauth-okta
-      namespace: {{ .Values.argocdNamespace }}
+      namespace: *ns
       project: platform
-      annotations:
-        argocd.argoproj.io/sync-wave: "1"
+      annotations: { argocd.argoproj.io/sync-wave: "1" }
       finalizers: [resources-finalizer.argocd.argoproj.io]
       source:
-        repoURL: {{ .Values.selfRepoURL }}
-        targetRevision: {{ .Values.selfRev }}
+        repoURL: *selfRepo
+        targetRevision: *selfRev
         path: infra/oauth-okta
       destination:
-        server: {{ .Values.destServer }}
-        namespace: {{ .Values.argocdNamespace }}
+        server: *dest
+        namespace: *ns
       syncPolicy:
         automated: { prune: true, selfHeal: true }
 
-    # 4) Cluster Autoscaler – infra
     - name: cluster-autoscaler
-      namespace: {{ .Values.argocdNamespace }}
+      namespace: *ns
       project: platform
-      annotations:
-        argocd.argoproj.io/sync-wave: "1"
+      annotations: { argocd.argoproj.io/sync-wave: "1" }
       finalizers: [resources-finalizer.argocd.argoproj.io]
       source:
-        repoURL: {{ .Values.selfRepoURL }}
-        targetRevision: {{ .Values.selfRev }}
+        repoURL: *selfRepo
+        targetRevision: *selfRev
         path: infra/cluster-autoscaler
       destination:
-        server: {{ .Values.destServer }}
-        namespace: {{ .Values.argocdNamespace }}
+        server: *dest
+        namespace: *ns
       syncPolicy:
         automated: { prune: true, selfHeal: true }
 
-    # 5) NGINX app – app-a resources
     - name: app-a-nginx
-      namespace: {{ .Values.argocdNamespace }}
+      namespace: *ns
       project: app-a
-      annotations:
-        argocd.argoproj.io/sync-wave: "5"
+      annotations: { argocd.argoproj.io/sync-wave: "5" }
       finalizers: [resources-finalizer.argocd.argoproj.io]
       source:
         repoURL: https://charts.bitnami.com/bitnami
@@ -101,8 +87,8 @@ argocd-apps:
               type: ClusterIP
             replicaCount: 2
       destination:
-        server: {{ .Values.destServer }}
-        namespace: {{ .Values.appANamespace }}
+        server: *dest
+        namespace: *appA
       syncPolicy:
         automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
