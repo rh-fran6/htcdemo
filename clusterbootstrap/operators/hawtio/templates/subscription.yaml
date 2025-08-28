@@ -1,0 +1,13 @@
+
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: subscription-hawtio
+  namespace: openshift-operators
+spec:
+  channel: stable
+  name: hawtio
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic
+

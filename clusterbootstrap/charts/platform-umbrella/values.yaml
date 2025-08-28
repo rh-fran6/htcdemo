@@ -22,6 +22,38 @@ argocd-apps:
       syncPolicy:
         automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
+    
+    - name: hawtio
+      namespace: *ns
+      project: platform
+      annotations: { argocd.argoproj.io/sync-wave: "-2" }
+      finalizers: [resources-finalizer.argocd.argoproj.io]
+      source:
+        repoURL: *selfRepo
+        targetRevision: *selfRev
+        path: clusterbootstrap/operators/hawtio
+      destination:
+        server: *dest
+        namespace: openshift-operators
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]
+    
+    - name: dev-spaces
+      namespace: *ns
+      project: platform
+      annotations: { argocd.argoproj.io/sync-wave: "-2" }
+      finalizers: [resources-finalizer.argocd.argoproj.io]
+      source:
+        repoURL: *selfRepo
+        targetRevision: *selfRev
+        path: clusterbootstrap/operators/dev-spaces
+      destination:
+        server: *dest
+        namespace: openshift-operators
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]
 
     - name: oauth-okta
       namespace: *ns
