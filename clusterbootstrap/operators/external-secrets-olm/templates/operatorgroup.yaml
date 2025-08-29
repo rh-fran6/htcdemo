@@ -3,6 +3,8 @@ kind: OperatorGroup
 metadata:
   name: external-secrets-og
   namespace: external-secrets
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   targetNamespaces:
     - openshift-operators  
