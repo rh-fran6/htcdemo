@@ -86,7 +86,7 @@
           kind: Subscription
           metadata:
             name: openshift-gitops-operator
-            namespace: openshift-gitops-operator
+            namespace: "openshift-operators"
           spec:
             channel: "{{ gitops_channel | default('stable') }}"
             name: openshift-gitops-operator
@@ -123,8 +123,6 @@
                 enabled: true
             dex:
               openShiftOAuth: true
-            config:
-              admin.enabled: "false"
             rbac:
               scopes: '{{ rbac_scopes }}'
               defaultPolicy: '{{ rbac_default_policy }}'
