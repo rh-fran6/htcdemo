@@ -118,11 +118,118 @@
             name: openshift-gitops
             namespace: "{{ argocd_namespace }}"
           spec:
+            notifications:
+              enabled: true
+            resourceTrackingMethod: annotation
+            statusBadgeEnabled: true
             server:
               route:
                 enabled: true
-            dex:
-              openShiftOAuth: true
+                #tls:
+                #  termination: edge
+                #  insecureEdgeTerminationPolicy: Redirect              
+              autoscale:
+                enabled: false
+              grpc:
+                ingress:
+                  enabled: false
+              ingress:
+                enabled: false
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 125m
+                  memory: 128Mi
+              service:
+                type: ''
+            grafana:
+              enabled: false
+              ingress:
+                enabled: false
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 250m
+                  memory: 128Mi
+              route:
+                enabled: false
+            monitoring:
+              enabled: false
+            prometheus:
+              enabled: false
+              ingress:
+                enabled: false
+              route:
+                enabled: false
+            sso:
+              dex:
+                openShiftOAuth: true
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 256Mi
+                  requests:
+                    cpu: 250m
+                    memory: 128Mi
+              provider: dex
+            applicationSet:
+              resources:
+                limits:
+                  cpu: '2'
+                  memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              webhookServer:
+                ingress:
+                  enabled: false
+                route:
+                  enabled: false
+            repo:
+              resources:
+                limits:
+                  cpu: '1'
+                  memory: 1Gi
+                requests:
+                  cpu: 250m
+                  memory: 256Mi
+            resourceExclusions: |
+              - apiGroups:
+                - tekton.dev
+                clusters:
+                - '*'
+                kinds:
+                - TaskRun
+                - PipelineRun
+            ha:
+              enabled: false
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 250m
+                  memory: 128Mi
+            redis:
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 250m
+                  memory: 128Mi
+            controller:
+              resources:
+                limits:
+                  cpu: '2'
+                  memory: 2Gi
+                requests:
+                  cpu: 250m
+                  memory: 1Gi
             rbac:
               scopes: '{{ rbac_scopes }}'
               defaultPolicy: '{{ rbac_default_policy }}'
@@ -165,6 +272,7 @@
           kind: Group
           metadata:
             name: "{{ g.name }}"
+          users: [cluster-admin]
 {% endfor %}
 
 {# --------------------- ARGO PROJECTS --------------------- #}
@@ -326,8 +434,6 @@
           metadata:
             name: "{{ bootstrap_app_name }}"
             namespace: "{{ argocd_namespace }}"
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
           spec:
             project: "{{ bootstrap_project }}"
             source:

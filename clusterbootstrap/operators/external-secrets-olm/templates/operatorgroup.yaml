@@ -7,5 +7,5 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   targetNamespaces:
-    - openshift-operators  
+    - external-secrets  
   upgradeStrategy: Default

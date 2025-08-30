@@ -1,0 +1,86 @@
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: openshift-gitops
+  namespace: openshift-gitops
+spec:
+  sso:
+    dex:
+      openShiftOAuth: true
+      # MUST be a string block:
+      config: |
+        connectors:
+        - type: openshift
+          id: openshift
+          name: OpenShift
+          config:
+            issuer: https://kubernetes.default.svc
+            insecureCA: true
+            clientID: system:serviceaccount:openshift-gitops:openshift-gitops-argocd-dex-server
+            clientSecret: $oidc.dex.clientSecret
+            redirectURI: https://openshift-gitops-server-openshift-gitops.apps.dem.a.rhdemolabs.com/api/dex/callback
+            groups:
+            - admin-team
+
+        # ---- REQUIRED: Dex static clients ----
+        staticClients:
+        - id: argo-cd
+          name: Argo CD
+          secret: $oidc.dex.clientSecret
+          redirectURIs:
+          - https://openshift-gitops-server-openshift-gitops.apps.dem.a.rhdemolabs.com/auth/callback
+        - id: argo-cd-cli
+          name: Argo CD CLI
+          secret: $oidc.dex.clientSecret
+          redirectURIs:
+          - http://localhost:8085/auth/callback
+
+  server:
+    route:
+      enabled: true
+  oidcConfig: |
+    name: OpenShift
+    issuer: https://openshift-gitops-server-openshift-gitops.apps.dem.a.rhdemolabs.com/api/dex
+    clientID: argo-cd
+    clientSecret: $oidc.dex.clientSecret
+    requestedScopes:
+    - openid
+    - profile
+    - email
+    - groups
+
+  # Anything else that belongs in argocd-cm but lacks a dedicated field
+  extraConfig:
+    url: https://openshift-gitops-server-openshift-gitops.apps.dem.a.rhdemolabs.com
+    server.rbac.disableApplicationFineGrainedRBACInheritance: "false"
+    resource.exclusions: |
+      - apiGroups:
+        - tekton.dev
+        clusters:
+        - '*'
+        kinds:
+        - TaskRun
+        - PipelineRun
+    users.anonymous.enabled: "false"
+
+  rbac:
+    defaultPolicy: role:readonly
+    policy: |
+      g, group:admin-team, role:admin
+      g, group:devops-team, role:devops
+      g, group:app-a-team, role:app-a
+      g, group:noc-team, role:noc
+      p, role:devops, applications, *, platform/*, allow
+      p, role:devops, projects, get, platform, allow
+      p, role:devops, clusters, *, *, allow
+      p, role:devops, repositories, *, *, allow
+      p, role:devops, logs, get, *, allow
+      p, role:devops, exec, create, *, allow
+      p, role:devops, certificates, *, *, allow
+      p, role:devops, accounts, get, *, allow
+      p, role:devops, gpgkeys, *, *, allow
+      p, role:app-a, applications, get, app-a/*, allow
+      p, role:app-a, applications, sync, app-a/*, allow
+      p, role:app-a, projects, get, app-a, allow
+      p, role:noc, applications, get, apps/*, allow
+      p, role:noc, projects, get, apps, allow

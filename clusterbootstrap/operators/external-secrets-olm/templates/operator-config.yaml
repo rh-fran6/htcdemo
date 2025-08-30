@@ -2,7 +2,7 @@ apiVersion: operator.external-secrets.io/v1alpha1
 kind: OperatorConfig
 metadata:
   name: cluster
-  namespace: openshift-operators
+  namespace: external-secrets
 spec:
   certController:
     requeueInterval: 5m
