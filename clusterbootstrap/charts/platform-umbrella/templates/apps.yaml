@@ -1,0 +1,31 @@
+{{- $apps := (index .Values "argocd-apps" "applications") | default list -}}
+{{- $defaultNS := .Values.argocdNamespace | default "openshift-gitops" -}}
+
+{{- range $app := $apps }}
+  {{- if (default false $app.install) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $app.name }}
+  namespace: {{ default $defaultNS $app.namespace }}
+  {{- if $app.annotations }}
+  annotations:
+{{ toYaml $app.annotations | indent 4 }}
+  {{- end }}
+  {{- if $app.finalizers }}
+  finalizers:
+{{ toYaml $app.finalizers | indent 4 }}
+  {{- end }}
+spec:
+  project: {{ $app.project }}
+  source:
+{{ toYaml $app.source | indent 4 }}
+  destination:
+{{ toYaml $app.destination | indent 4 }}
+  {{- if $app.syncPolicy }}
+  syncPolicy:
+{{ toYaml $app.syncPolicy | indent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}

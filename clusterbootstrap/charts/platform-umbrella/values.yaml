@@ -8,6 +8,7 @@ selfRev: &selfRev main
 argocd-apps:
   applications:
     - name: eso-operator-olm
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "-2" }
@@ -24,6 +25,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
     
     - name: hawtio
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "-2" }
@@ -40,6 +42,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
     
     - name: vault-secrets-operator
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "-2" }
@@ -56,6 +59,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
     
     - name: dev-spaces
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "-2" }
@@ -72,6 +76,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
 
     - name: oauth-okta
+      install: false
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "1" }
@@ -87,6 +92,7 @@ argocd-apps:
         automated: { prune: true, selfHeal: true }
 
     - name: cluster-autoscaler
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "1" }
@@ -102,6 +108,7 @@ argocd-apps:
         automated: { prune: true, selfHeal: true }
 
     - name: app-a-nginx
+      install: true
       namespace: *ns
       project: app-a
       annotations: { argocd.argoproj.io/sync-wave: "5" }
