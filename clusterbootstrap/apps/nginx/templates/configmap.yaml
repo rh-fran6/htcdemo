@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-content
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
   index.html.tmpl: |
     <!doctype html>
@@ -10,41 +10,52 @@ data:
       <head>
         <meta charset="utf-8">
         <title>Welcome to OpenShift NGINX 🚀</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
+          :root { --bg1:#ee0000; --bg2:#c41212; --ink:#ffffff; --accent:#ffeb3b; }
+          * { box-sizing: border-box; }
           body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: radial-gradient(1200px 600px at 10% 10%, #ff5959, #c90c0c);
-            color: #fff; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+            margin: 0; min-height: 100vh; color: var(--ink);
+            background: radial-gradient(1200px 600px at 10% 10%, #ff5959, var(--bg1)) fixed,
+                        linear-gradient(135deg, var(--bg1), var(--bg2)) fixed;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            display:flex; align-items:center; justify-content:center; padding: 2rem;
           }
           .card {
-            background: rgba(255,255,255,0.08); padding: 2rem 2.4rem; border-radius: 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 2rem 2.4rem; max-width: 980px; width: 100%;
             box-shadow: 0 12px 28px rgba(0,0,0,0.35); backdrop-filter: blur(8px);
-            max-width: 900px;
           }
-          h1 { font-size: 3rem; margin: 0 0 .5rem 0; }
-          p  { font-size: 1.2rem; margin: 0 0 1.5rem 0; }
-          ul { line-height: 1.8; font-size: 1.05rem; }
-          code { background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 6px; color: #ffeb3b; }
-          .pill { display:inline-block; margin-top:1rem; padding:.35rem .7rem; border-radius:999px;
-                  background:rgba(255,255,255,0.12); font-size:.95rem; }
+          h1 { font-size: clamp(2rem, 4vw, 3.25rem); margin: 0 0 .5rem 0; }
+          p  { font-size: 1.15rem; margin: 0 0 1.5rem 0; }
+          ul { line-height: 1.85; font-size: 1.05rem; padding-left: 1.25rem; }
+          code { background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 6px; color: var(--accent); }
+          .pills { margin-top: 1rem; display:flex; gap:.5rem; flex-wrap: wrap; }
+          .pill { display:inline-block; padding:.35rem .7rem; border-radius:999px; background:rgba(255,255,255,0.12); font-size:.95rem; }
+          .muted { opacity: .85; }
         </style>
       </head>
       <body>
-        <div class="card">
+        <main class="card">
           <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
-          <p>This page is being served live from <strong>Red Hat UBI/NGINX (non-root)</strong> inside your OpenShift cluster.</p>
+          <p class="muted">
+            Served by <strong>NGINX (non-root)</strong> inside your OpenShift cluster.
+          </p>
 
           <h3>Cluster Details</h3>
           <ul>
             <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
-            <li><strong>Project (Namespace):</strong> {{ .Values.namespace }}</li>
+            <li><strong>Project (Namespace):</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
             <li><strong>Pod Name:</strong> <code>${POD_NAME}</code></li>
             <li><strong>Node Name:</strong> <code>${NODE_NAME}</code></li>
+            <li><strong>Zone:</strong> <code>${ZONE}</code></li>
             <li><strong>Served At (UTC):</strong> <code>${SERVED_AT}</code></li>
           </ul>
 
-          <span class="pill">Replica: <code>${POD_NAME}</code></span>
-          <span class="pill">Zone: <code>${ZONE}</code></span>
-        </div>
+          <div class="pills">
+            <span class="pill">Replica: <code>${POD_NAME}</code></span>
+            <span class="pill">Namespace: <code>${NAMESPACE}</code></span>
+          </div>
+        </main>
       </body>
     </html>

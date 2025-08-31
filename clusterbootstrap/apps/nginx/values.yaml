@@ -1,1 +1,14 @@
+
 namespace: app-a
+
+clusterName: "ocp-demo-cluster"
+replicas: 2
+
+image:
+  repository: nginxinc/nginx-unprivileged
+  tag: stable-alpine
+  pullPolicy: IfNotPresent
+
+route:
+  enabled: true
+  tlsTermination: edge     

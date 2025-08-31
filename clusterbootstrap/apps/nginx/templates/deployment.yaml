@@ -2,9 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels: { app: nginx }
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels: { app: nginx }
   template:
@@ -13,7 +14,6 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-      # Shared volumes
       volumes:
         - name: tpl
           configMap:
@@ -23,7 +23,6 @@ spec:
                 path: index.html.tmpl
         - name: webroot
           emptyDir: {}
-      # Render the template -> /work/index.html
       initContainers:
         - name: render
           image: alpine:3.20
@@ -32,19 +31,28 @@ spec:
             - -c
             - |
               set -e
-              # Compute timestamp once at startup
+              # Compute timestamp once at container start
               export SERVED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              # Render template with all env vars
+              # Render the template using env vars into the served directory
               envsubst < /config/index.html.tmpl > /work/index.html
           env:
             - name: POD_NAME
-              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: NODE_NAME
-              valueFrom: { fieldRef: { fieldPath: spec.nodeName } }
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             - name: NAMESPACE
-              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            # If your nodes don't carry topology.kubernetes.io/zone, you can remove this var.
             - name: ZONE
-              valueFrom: { fieldRef: { fieldPath: metadata.labels['topology.kubernetes.io/zone'] } }
+              valueFrom:
+                fieldRef:
+                  fieldPath: "metadata.labels['topology.kubernetes.io/zone']"
           volumeMounts:
             - name: tpl
               mountPath: /config
@@ -52,13 +60,23 @@ spec:
               mountPath: /work
       containers:
         - name: nginx
-          image: nginxinc/nginx-unprivileged:stable-alpine
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8080
-          readinessProbe: { httpGet: { path: "/", port: 8080 }, initialDelaySeconds: 5 }
-          livenessProbe:  { httpGet: { path: "/", port: 8080 }, initialDelaySeconds: 15 }
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
           volumeMounts:
             - name: webroot
               mountPath: /usr/share/nginx/html

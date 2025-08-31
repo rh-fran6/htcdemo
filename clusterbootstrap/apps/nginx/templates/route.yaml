@@ -1,8 +1,10 @@
+{{- if .Values.route.enabled }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: nginx
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels: { app: nginx }
 spec:
   to:
     kind: Service
@@ -10,4 +12,5 @@ spec:
   port:
     targetPort: http
   tls:
-    termination: edge
+    termination: {{ .Values.route.tlsTermination }}
+{{- end }}
