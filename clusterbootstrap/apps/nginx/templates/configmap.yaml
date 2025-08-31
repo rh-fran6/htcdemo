@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-content
+  namespace: {{ .Values.namespace }}
+data:
+  index.html: |
+    <!doctype html>
+    <html>
+      <head><meta charset="utf-8"><title>OpenShift NGINX</title></head>
+      <body style="font-family: sans-serif;">
+        <h1>Test Nginx Page! 🚀</h1>
+        <p>Served by Red Hat UBI NGINX on OpenShift.</p>
+      </body>
+    </html>
