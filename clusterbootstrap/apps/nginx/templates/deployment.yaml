@@ -15,49 +15,34 @@ spec:
       securityContext:
         runAsNonRoot: true
       volumes:
-        - name: tpl
+        - name: html
           configMap:
             name: nginx-content
             items:
-              - key: index.html.tmpl
-                path: index.html.tmpl
-        - name: webroot
-          emptyDir: {}
-      initContainers:
-        - name: render
-          image: alpine:3.20
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              # Compute timestamp once at container start
-              export SERVED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              # Render the template using env vars into the served directory
-              envsubst < /config/index.html.tmpl > /work/index.html
-          env:
-            - name: POD_NAME
-              valueFrom:
+              - key: index.html
+                path: index.html
+        - name: conf
+          configMap:
+            name: nginx-content
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: "podname"
                 fieldRef:
                   fieldPath: metadata.name
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: NAMESPACE
-              valueFrom:
+              - path: "namespace"
                 fieldRef:
                   fieldPath: metadata.namespace
-            # If your nodes don't carry topology.kubernetes.io/zone, you can remove this var.
-            - name: ZONE
-              valueFrom:
+              - path: "nodename"
+                fieldRef:
+                  fieldPath: spec.nodeName
+              # If this label doesn't exist in your cluster, remove this item.
+              - path: "zone"
                 fieldRef:
                   fieldPath: "metadata.labels['topology.kubernetes.io/zone']"
-          volumeMounts:
-            - name: tpl
-              mountPath: /config
-            - name: webroot
-              mountPath: /work
       containers:
         - name: nginx
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -66,17 +51,18 @@ spec:
             - name: http
               containerPort: 8080
           readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
+            httpGet: { path: "/", port: 8080 }
             initialDelaySeconds: 5
-            periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
+            httpGet: { path: "/", port: 8080 }
             initialDelaySeconds: 15
-            periodSeconds: 20
           volumeMounts:
-            - name: webroot
+            - name: html
               mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+            - name: podinfo
+              mountPath: /etc/podinfo
+              readOnly: true

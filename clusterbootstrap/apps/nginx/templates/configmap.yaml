@@ -4,7 +4,7 @@ metadata:
   name: nginx-content
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
-  index.html.tmpl: |
+  index.html: |
     <!doctype html>
     <html lang="en">
       <head>
@@ -46,16 +46,35 @@ data:
           <ul>
             <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
             <li><strong>Project (Namespace):</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
-            <li><strong>Pod Name:</strong> <code>${POD_NAME}</code></li>
-            <li><strong>Node Name:</strong> <code>${NODE_NAME}</code></li>
-            <li><strong>Zone:</strong> <code>${ZONE}</code></li>
-            <li><strong>Served At (UTC):</strong> <code>${SERVED_AT}</code></li>
+            <li><strong>Pod Name:</strong> <code><!--# include file="/etc/podinfo/podname" --></code></li>
+            <li><strong>Node Name:</strong> <code><!--# include file="/etc/podinfo/nodename" --></code></li>
+            <li><strong>Zone:</strong> <code><!--# include file="/etc/podinfo/zone" --></code></li>
+            <li><strong>Served At (GMT):</strong> <code><!--# echo var="date_gmt" --></code></li>
           </ul>
 
           <div class="pills">
-            <span class="pill">Replica: <code>${POD_NAME}</code></span>
-            <span class="pill">Namespace: <code>${NAMESPACE}</code></span>
+            <span class="pill">Replica: <code><!--# include file="/etc/podinfo/podname" --></code></span>
+            <span class="pill">Namespace: <code><!--# include file="/etc/podinfo/namespace" --></code></span>
           </div>
         </main>
       </body>
     </html>
+  default.conf: |
+    server {
+      listen 8080;
+      server_name _;
+      root /usr/share/nginx/html;
+      index index.html;
+
+      # Enable Server Side Includes to render downward API files & time
+      ssi on;
+      ssi_types text/html;
+      ssi_silent_errors on;
+
+      # Avoid caching so values refresh on reload
+      add_header Cache-Control "no-store" always;
+
+      location / {
+        try_files $uri $uri/ =404;
+      }
+    }
