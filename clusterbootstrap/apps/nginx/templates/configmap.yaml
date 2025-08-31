@@ -6,10 +6,69 @@ metadata:
 data:
   index.html: |
     <!doctype html>
-    <html>
-      <head><meta charset="utf-8"><title>OpenShift NGINX</title></head>
-      <body style="font-family: sans-serif;">
-        <h1>Test Nginx Page! 🚀</h1>
-        <p>Served by Red Hat UBI NGINX on OpenShift.</p>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>Welcome to OpenShift NGINX 🚀</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #EE0000, #CC0000, #660000);
+            color: #fff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+          }
+          h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5em;
+          }
+          p {
+            font-size: 1.25rem;
+            max-width: 800px;
+          }
+          .card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+          }
+          .details {
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            text-align: left;
+          }
+          .details code {
+            background: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ffeb3b;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
+          <p>
+            This page is being served live from <strong>Red Hat UBI NGINX</strong> inside your
+            OpenShift cluster.
+          </p>
+
+          <div class="details">
+            <h3>Cluster Details:</h3>
+            <ul>
+              <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
+              <li><strong>Project (Namespace):</strong> {{ .Values.namespace }}</li>
+              <li><strong>Pod Name:</strong> <code>${HOSTNAME}</code></li>
+              <li><strong>Node Name:</strong> <code>${NODE_NAME}</code></li>
+              <li><strong>Served At:</strong> <code>$(date)</code></li>
+            </ul>
+          </div>
+        </div>
       </body>
     </html>
