@@ -37,7 +37,7 @@ ABS_COLLECTIONS_PATH := $(abspath $(COLLECTIONS_PATH))
 
 # Full pipeline
 all: run
-run: venv deps render
+run: deps render
 
 # 1) Recreate venv from scratch (self-cleaning)
 venv:
