@@ -267,12 +267,13 @@
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig }}"
         state: present
+        merge_type: merge
         definition:
           apiVersion: user.openshift.io/v1
           kind: Group
           metadata:
             name: "{{ g.name }}"
-          users: [kubeadmin]
+          users: [{{ g.users | map('quote') | join(', ') }}]
 {% endfor %}
 
 {# --------------------- ARGO PROJECTS --------------------- #}

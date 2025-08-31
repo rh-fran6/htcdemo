@@ -32,10 +32,10 @@ create_aws_sm_secret: true
 rbac_scopes: "[groups]"
 rbac_default_policy: "role:readonly"
 rbac_groups:
-  - { name: "admin-team", role: "admin" }
-  - { name: "devops-team", role: "devops" }
-  - { name: "app-a-team", role: "app-a" }
-  - { name: "noc-team",   role: "noc" }
+  - { name: "admin-team", role: "admin", users: [kubeadmin, kube] }
+  - { name: "devops-team", role: "devops", users: [thisuser, thatuser, tom cruise, carlos-platter]}
+  - { name: "app-a-team", role: "app-a", users: [user1] }
+  - { name: "noc-team",   role: "noc", users: [] }
 rbac_roles:
   - name: "devops"
     permissions:
@@ -63,7 +63,20 @@ bootstrap_app_name: "bootstrap"
 bootstrap_repo_url: "{{ github_repo_url }}" 
 bootstrap_target_revision: "main"
 bootstrap_path: "bootstrap"                  
-bootstrap_project: "platform"        
+bootstrap_project: "platform"   
+
+# {% for g in rbac_groups | default([]) %}
+#     - name: Ensure OpenShift group {{ g.name }} exists
+#       kubernetes.core.k8s:
+#         kubeconfig: "{{ kubeconfig }}"
+#         state: present
+#         definition:
+#           apiVersion: user.openshift.io/v1
+#           kind: Group
+#           metadata:
+#             name: "{{ g.name }}"
+#           users: "{{ (g.users | default([])) | map('string') | list }}"
+# {% endfor %}
 
 
 

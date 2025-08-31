@@ -7,6 +7,6 @@
     - vars.yaml
     - secrets/encrypted-secrets.yaml
   
+  
   roles:
     - render_playbook
-  
