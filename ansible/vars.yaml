@@ -37,6 +37,9 @@ rbac_groups:
   - { name: "app-a-team", role: "app-a", users: [user1] }
   - { name: "noc-team",   role: "noc", users: [] }
 rbac_roles:
+  - name: admin
+    permissions:
+      - { resource: "*", action: "*", object: "*/*"}
   - name: "devops"
     permissions:
       - { resource: "applications", action: "*",     object: "platform/*" }
@@ -70,12 +73,13 @@ bootstrap_project: "platform"
 #       kubernetes.core.k8s:
 #         kubeconfig: "{{ kubeconfig }}"
 #         state: present
+#         merge_type: merge
 #         definition:
 #           apiVersion: user.openshift.io/v1
 #           kind: Group
 #           metadata:
 #             name: "{{ g.name }}"
-#           users: "{{ (g.users | default([])) | map('string') | list }}"
+#           users: [{{ g.users | map('quote') | join(', ') }}]
 # {% endfor %}
 
 

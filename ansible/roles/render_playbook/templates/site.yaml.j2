@@ -67,6 +67,25 @@
 
 {# --------------------- OPTIONAL: INSTALL OPENSHIFT GITOPS OPERATOR --------------------- #}
 {% if install_gitops_operator | default(false) %}
+
+    - name: Create Argocd service account for cluster wide operation
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: openshift-gitops-argocd-application-controller-cluster-admin
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: cluster-admin
+          subjects:
+            - kind: ServiceAccount
+              name: openshift-gitops-argocd-application-controller
+              namespace: "{{ argocd_namespace }}"
+
     - name: Ensure operator namespace openshift-operators exists
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig }}"
@@ -234,6 +253,8 @@
               scopes: '{{ rbac_scopes }}'
               defaultPolicy: '{{ rbac_default_policy }}'
               policy: |
+                g, user:kube:admin, role:admin
+                g, EglvcGVuc2hpZnQ, role:admin
 {# Build Casbin policy lines with consistent indentation under the block scalar #}
 {% set lines = [] -%}
 {% for g in rbac_groups | default([]) -%}
@@ -273,7 +294,10 @@
           kind: Group
           metadata:
             name: "{{ g.name }}"
-          users: [{{ g.users | map('quote') | join(', ') }}]
+          users:
+{% for u in g.users | default([]) %}
+            - "{{ ('b64:' ~ (u | b64encode)) if (':' in u) else u }}"
+{% endfor %}
 {% endfor %}
 
 {# --------------------- ARGO PROJECTS --------------------- #}

@@ -1,15 +1,15 @@
 
-# apiVersion: operators.coreos.com/v1alpha1
-# kind: Subscription
-# metadata:
-#   name: subscription-hawtio
-#   namespace: hawtio
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "-2"
-# spec:
-#   channel: stable
-#   name: hawtio
-#   source: community-operators
-#   sourceNamespace: openshift-marketplace
-#   installPlanApproval: Automatic
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: red-hat-hawtio-operator
+  namespace: hawtio
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  channel: stable-v1
+  name: red-hat-hawtio-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic
 

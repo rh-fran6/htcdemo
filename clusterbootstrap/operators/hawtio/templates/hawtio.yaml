@@ -1,9 +1,9 @@
-# apiVersion: hawt.io/v1alpha1
-# kind: Hawtio
-# metadata:
-#   name: hawtio-instance
-#   namespace: hawtio
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "0"
-# spec:
-#   replicas: 1
+apiVersion: hawt.io/v2
+kind: Hawtio
+metadata:
+  name: hawtio-instance
+  namespace: hawtio
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
