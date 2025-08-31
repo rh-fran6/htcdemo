@@ -1,4 +1,28 @@
-apiVersion: v2
+apiVersion: v2                 # Helm 3 charts use v2
 name: vault
-type: application
-version: 0.1.0
+description: HashiCorp Vault on Kubernetes/OpenShift with optional HA storage
+type: application              # "application" or "library"
+version: 0.1.0                 # Chart (packaging) version - MUST be SemVer
+appVersion: "1.17.0"           # Version of your app (free-form string)
+
+# Optional but recommended
+kubeVersion: ">=1.27.0-0"      # Min K8s version; add an upper bound only if needed
+home: https://www.vaultproject.io/
+sources:
+  - https://github.com/hashicorp/vault
+  - https://github.com/your-org/vault-chart
+keywords:
+  - vault
+  - secrets
+  - security
+  - openshift
+  - external-secrets-operator
+
+# Useful annotations (e.g., for Artifact Hub or internal tooling)
+annotations:
+  artifacthub.io/prerelease: "false"
+  # artifacthub.io/links: |
+  #   - name: Docs
+  #     url: https://www.vaultproject.io/docs
+
+
