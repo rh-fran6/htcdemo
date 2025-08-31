@@ -3,5 +3,7 @@ kind: Hawtio
 metadata:
   name: hawtio-instance
   namespace: openshift-operators
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   replicas: 1
