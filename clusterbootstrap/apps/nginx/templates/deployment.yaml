@@ -10,7 +10,10 @@ spec:
     matchLabels: { app: nginx }
   template:
     metadata:
-      labels: { app: nginx }
+      labels:
+        app: nginx
+        # Optional: if you want Zone to show, add this pod label (set it from values if you like)
+        # topology.kubernetes.io/zone: "zone-a"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -36,10 +39,7 @@ spec:
               - path: "namespace"
                 fieldRef:
                   fieldPath: metadata.namespace
-              - path: "nodename"
-                fieldRef:
-                  fieldPath: spec.nodeName
-              # If this label doesn't exist in your cluster, remove this item.
+              # Zone only works if the POD has that label (not the node).
               - path: "zone"
                 fieldRef:
                   fieldPath: "metadata.labels['topology.kubernetes.io/zone']"

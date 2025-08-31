@@ -47,7 +47,8 @@ data:
             <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
             <li><strong>Project (Namespace):</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
             <li><strong>Pod Name:</strong> <code><!--# include file="/etc/podinfo/podname" --></code></li>
-            <li><strong>Node Name:</strong> <code><!--# include file="/etc/podinfo/nodename" --></code></li>
+            <li><strong>Hostname (pod):</strong> <code><!--# echo var="hostname" --></code></li>
+            <!-- Zone only renders if you label the pod with topology.kubernetes.io/zone -->
             <li><strong>Zone:</strong> <code><!--# include file="/etc/podinfo/zone" --></code></li>
             <li><strong>Served At (GMT):</strong> <code><!--# echo var="date_gmt" --></code></li>
           </ul>
@@ -71,7 +72,6 @@ data:
       ssi_types text/html;
       ssi_silent_errors on;
 
-      # Avoid caching so values refresh on reload
       add_header Cache-Control "no-store" always;
 
       location / {
