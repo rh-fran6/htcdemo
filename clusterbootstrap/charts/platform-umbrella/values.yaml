@@ -76,7 +76,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
 
     - name: oauth-okta
-      install: false
+      install: true
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "1" }
