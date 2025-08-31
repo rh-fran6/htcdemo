@@ -3,7 +3,3 @@ name: platform-umbrella
 type: application
 version: 0.1.0
 
-# dependencies:
-#   - name: argocd-apps
-#     version: 1.6.2           # pin a recent version
-#     repository: https://argoproj.github.io/argo-helm

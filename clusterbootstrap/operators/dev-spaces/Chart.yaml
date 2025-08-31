@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dev-spaces
+type: application
+version: 0.1.0
