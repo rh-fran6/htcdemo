@@ -6,36 +6,59 @@ metadata:
 spec:
   replicas: 2
   selector:
-    matchLabels:
-      app: nginx
+    matchLabels: { app: nginx }
   template:
     metadata:
-      labels:
-        app: nginx
+      labels: { app: nginx }
     spec:
+      securityContext:
+        runAsNonRoot: true
+      # Shared volumes
+      volumes:
+        - name: tpl
+          configMap:
+            name: nginx-content
+            items:
+              - key: index.html.tmpl
+                path: index.html.tmpl
+        - name: webroot
+          emptyDir: {}
+      # Render the template -> /work/index.html
+      initContainers:
+        - name: render
+          image: alpine:3.20
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              # Compute timestamp once at startup
+              export SERVED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              # Render template with all env vars
+              envsubst < /config/index.html.tmpl > /work/index.html
+          env:
+            - name: POD_NAME
+              valueFrom: { fieldRef: { fieldPath: metadata.name } }
+            - name: NODE_NAME
+              valueFrom: { fieldRef: { fieldPath: spec.nodeName } }
+            - name: NAMESPACE
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+            - name: ZONE
+              valueFrom: { fieldRef: { fieldPath: metadata.labels['topology.kubernetes.io/zone'] } }
+          volumeMounts:
+            - name: tpl
+              mountPath: /config
+            - name: webroot
+              mountPath: /work
       containers:
         - name: nginx
           image: nginxinc/nginx-unprivileged:stable-alpine
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8080   # nginx-unprivileged listens on 8080
-          readinessProbe:
-            httpGet: { path: "/", port: 8080 }
-            initialDelaySeconds: 5
-          livenessProbe:
-            httpGet: { path: "/", port: 8080 }
-            initialDelaySeconds: 15
+              containerPort: 8080
+          readinessProbe: { httpGet: { path: "/", port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe:  { httpGet: { path: "/", port: 8080 }, initialDelaySeconds: 15 }
           volumeMounts:
-            - name: site
+            - name: webroot
               mountPath: /usr/share/nginx/html
-              readOnly: true
-      securityContext:
-        runAsNonRoot: true         # compatible with OpenShift restricted SCC
-      volumes:
-        - name: site
-          configMap:
-            name: nginx-content
-            items:
-              - key: index.html
-                path: index.html

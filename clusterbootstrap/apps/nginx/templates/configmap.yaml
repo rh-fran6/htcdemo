@@ -4,7 +4,7 @@ metadata:
   name: nginx-content
   namespace: {{ .Values.namespace }}
 data:
-  index.html: |
+  index.html.tmpl: |
     <!doctype html>
     <html lang="en">
       <head>
@@ -13,62 +13,38 @@ data:
         <style>
           body {
             font-family: 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #EE0000, #CC0000, #660000);
-            color: #fff;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-          }
-          h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5em;
-          }
-          p {
-            font-size: 1.25rem;
-            max-width: 800px;
+            background: radial-gradient(1200px 600px at 10% 10%, #ff5959, #c90c0c);
+            color: #fff; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
           }
           .card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.08); padding: 2rem 2.4rem; border-radius: 16px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+            max-width: 900px;
           }
-          .details {
-            margin-top: 1.5rem;
-            font-size: 1rem;
-            text-align: left;
-          }
-          .details code {
-            background: rgba(0,0,0,0.5);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #ffeb3b;
-          }
+          h1 { font-size: 3rem; margin: 0 0 .5rem 0; }
+          p  { font-size: 1.2rem; margin: 0 0 1.5rem 0; }
+          ul { line-height: 1.8; font-size: 1.05rem; }
+          code { background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 6px; color: #ffeb3b; }
+          .pill { display:inline-block; margin-top:1rem; padding:.35rem .7rem; border-radius:999px;
+                  background:rgba(255,255,255,0.12); font-size:.95rem; }
         </style>
       </head>
       <body>
         <div class="card">
           <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
-          <p>
-            This page is being served live from <strong>Red Hat UBI NGINX</strong> inside your
-            OpenShift cluster.
-          </p>
+          <p>This page is being served live from <strong>Red Hat UBI/NGINX (non-root)</strong> inside your OpenShift cluster.</p>
 
-          <div class="details">
-            <h3>Cluster Details:</h3>
-            <ul>
-              <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
-              <li><strong>Project (Namespace):</strong> {{ .Values.namespace }}</li>
-              <li><strong>Pod Name:</strong> <code>${HOSTNAME}</code></li>
-              <li><strong>Node Name:</strong> <code>${NODE_NAME}</code></li>
-              <li><strong>Served At:</strong> <code>$(date)</code></li>
-            </ul>
-          </div>
+          <h3>Cluster Details</h3>
+          <ul>
+            <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
+            <li><strong>Project (Namespace):</strong> {{ .Values.namespace }}</li>
+            <li><strong>Pod Name:</strong> <code>${POD_NAME}</code></li>
+            <li><strong>Node Name:</strong> <code>${NODE_NAME}</code></li>
+            <li><strong>Served At (UTC):</strong> <code>${SERVED_AT}</code></li>
+          </ul>
+
+          <span class="pill">Replica: <code>${POD_NAME}</code></span>
+          <span class="pill">Zone: <code>${ZONE}</code></span>
         </div>
       </body>
     </html>
