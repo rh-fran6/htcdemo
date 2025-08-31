@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: image-registry.openshift-image-registry.svc:5000/nginx-demo/nginx:latest
+          image: registry.redhat.io/ubi9/nginx-120:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
