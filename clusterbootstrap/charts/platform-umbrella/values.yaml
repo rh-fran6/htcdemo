@@ -39,6 +39,22 @@ argocd-apps:
         automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
     
+    - name: vault-secrets-operator
+      namespace: *ns
+      project: platform
+      annotations: { argocd.argoproj.io/sync-wave: "-2" }
+      finalizers: [resources-finalizer.argocd.argoproj.io]
+      source:
+        repoURL: *selfRepo
+        targetRevision: *selfRev
+        path: clusterbootstrap/operators/vault-secrets-operator
+      destination:
+        server: *dest
+        namespace: openshift-operators
+      syncPolicy:
+        automated: { prune: true, selfHeal: true }
+        syncOptions: [CreateNamespace=true]
+    
     - name: dev-spaces
       namespace: *ns
       project: platform

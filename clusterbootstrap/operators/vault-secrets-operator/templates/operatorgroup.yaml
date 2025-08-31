@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: vault-secrets-opeartor
+  namespace: vault-secrets-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  targetNamespaces:
+  - vault-secrets-operator
+  upgradeStrategy: Default
