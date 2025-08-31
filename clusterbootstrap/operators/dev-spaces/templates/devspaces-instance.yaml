@@ -1,10 +1,10 @@
-
-cat <<'YAML' | oc apply -f -
 apiVersion: org.eclipse.che/v2
 kind: CheCluster
 metadata:
   name: devspaces
   namespace: openshift-devspaces
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   components:
     metrics:
