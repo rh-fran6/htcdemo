@@ -59,7 +59,7 @@ argocd-apps:
         syncOptions: [CreateNamespace=true]
     
     - name: dev-spaces
-      install: true
+      install: false
       namespace: *ns
       project: platform
       annotations: { argocd.argoproj.io/sync-wave: "-2" }
