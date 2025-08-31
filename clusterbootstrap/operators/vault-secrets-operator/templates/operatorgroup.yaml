@@ -5,7 +5,4 @@ metadata:
   namespace: vault-secrets-operator
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-spec:
-  targetNamespaces:
-  - vault-secrets-operator
-  upgradeStrategy: Default
+spec: {}
