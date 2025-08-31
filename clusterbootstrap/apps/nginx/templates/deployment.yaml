@@ -15,37 +15,23 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: registry.redhat.io/ubi9/nginx-120:latest
+          image: nginxinc/nginx-unprivileged:stable-alpine
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8080
-              protocol: TCP
+              containerPort: 8080   # nginx-unprivileged listens on 8080
           readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
+            httpGet: { path: "/", port: 8080 }
             initialDelaySeconds: 5
-            periodSeconds: 10
           livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
+            httpGet: { path: "/", port: 8080 }
             initialDelaySeconds: 15
-            periodSeconds: 20
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 250m
-              memory: 256Mi
           volumeMounts:
             - name: site
-              mountPath: /opt/app-root/src     
+              mountPath: /usr/share/nginx/html
               readOnly: true
       securityContext:
-        runAsNonRoot: true
+        runAsNonRoot: true         # compatible with OpenShift restricted SCC
       volumes:
         - name: site
           configMap:
