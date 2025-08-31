@@ -4,6 +4,7 @@ kind: OperatorGroup
 metadata:
   name: operator-group-hawtio
   namespace: hawtio
+  annotation:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   targetNamespaces:
