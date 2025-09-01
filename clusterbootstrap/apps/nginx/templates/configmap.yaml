@@ -127,11 +127,6 @@ data:
                 <span class="chip amber">__SERVED_AT__</span>
               </li>
             </ul>
-
-            # <div class="pills">
-            #   <span class="pill">Replica: __POD_NAME__</span>
-            #   <span class="pill">Project: {{ .Values.namespace | default .Release.Namespace }}</span>
-            # </div>
           </main>
         </div>
       </body>
