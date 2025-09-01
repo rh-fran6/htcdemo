@@ -16,7 +16,7 @@ spec:
       volumes:
         - name: tpl
           configMap:
-            name: nginx-template
+            name: nginx-content
             items:
               - key: index.html.tmpl
                 path: index.html.tmpl
