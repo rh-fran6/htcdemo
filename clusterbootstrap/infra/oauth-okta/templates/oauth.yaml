@@ -16,11 +16,11 @@ spec:
         preferredUsername:
         - preferred_username
         - email
-      clientID: 3rOHRME5539iu8qHXMakc2WWjBddnWZg
-      clientSecret:
-        name: okta-login-secret
+      clientID: {{ .Values.okta.client_id }}
+      clientSecret: 
+        name: {{ .Values.okta.client_secret_name }}
       extraScopes:
       - email
       - profile
-      issuer: https://dev-z00fxud7wzbzsz10.us.auth0.com
+      issuer: {{ .Values.okta.issuer }}
     type: OpenID
