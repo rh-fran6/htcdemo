@@ -4,12 +4,7 @@ apiVersion: user.openshift.io/v1
 kind: Group
 metadata:
   name: {{ $groupName | quote }}
-  labels:
-    app.kubernetes.io/managed-by: {{ .Release.Service | default "Helm" | quote }}
-    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
-    app.kubernetes.io/part-of: {{ $.Chart.Name | quote }}
   annotations:
-    # Force full replace (not merge) so user list matches values.yaml exactly
     argocd.argoproj.io/sync-options: Replace=true
 users:
 {{- if $users }}
