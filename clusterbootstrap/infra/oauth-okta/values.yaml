@@ -1,0 +1,10 @@
+rbac_groups:
+  admin-team:
+    - fanyaegbu@redhat.com
+    - testuser@redhat.com
+  devops-team: []
+  app-a-team:
+    - user1
+  noc-team:
+    - noc-1
+  
