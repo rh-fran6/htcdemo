@@ -12,139 +12,125 @@ data:
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>OpenShift NGINX Demo</title>
         <style>
-          /* --- Color system --- */
-          :root{
-            --red-1:#ef4444;   /* primary red */
-            --red-2:#dc2626;   /* deep red */
-            --rose:#f43f5e;    /* rose accent */
-            --violet:#7c3aed;  /* complementary violet */
-            --indigo:#4f46e5;  /* cool indigo */
-            --mint:#10b981;    /* mint accent */
-            --amber:#f59e0b;   /* warm accent */
-            --ink:#ffffff;
-            --muted:#e5e7eb;
+          /* Page background (brand red), card is white */
+          html, body { height: 100%; }
+          body {
+            margin: 0;
+            background: linear-gradient(135deg, #ee3a3a, #c1121f);
+            color: #0f172a;
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            padding: 3.5rem 1.25rem;
           }
 
-          /* --- Layout background with soft animated gradient --- */
-          html,body{height:100%}
-          body{
-            margin:0; color:var(--ink);
-            font-family: system-ui, -apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
-            display:flex; align-items:center; justify-content:center; padding:2rem;
-            background:
-              radial-gradient(1200px 600px at 10% 10%, rgba(255,255,255,.08), transparent 60%),
-              radial-gradient(900px 500px at 90% 20%, rgba(255,255,255,.06), transparent 60%),
-              linear-gradient(135deg, var(--red-1), var(--rose), var(--violet), var(--indigo));
-            background-size: 100% 100%, 100% 100%, 200% 200%;
-            animation: bgshift 28s ease-in-out infinite alternate;
-          }
-          @keyframes bgshift { to { background-position: 0 0, 0 0, 100% 0; } }
-
-          /* Decorative soft orbs */
-          body::before, body::after{
-            content:""; position:fixed; pointer-events:none; filter: blur(60px); opacity:.35;
-            width:360px; height:360px; border-radius:50%;
-            z-index:0;
-          }
-          body::before{ background:linear-gradient(135deg, var(--amber), var(--rose)); top:-80px; left:-80px;}
-          body::after{  background:linear-gradient(135deg, var(--mint), var(--indigo)); bottom:-80px; right:-80px;}
-
-          /* --- Card with gradient border (glass) --- */
-          .frame{
-            position:relative; z-index:1; max-width:960px; width:min(960px, 96vw);
-            padding:1.2px; border-radius:18px;
-            background:linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.15));
-          }
-          .card{
-            border-radius:17px;
-            background: rgba(255,255,255,.10);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 18px 40px rgba(0,0,0,.35);
-            padding: clamp(1.25rem, 2.5vw, 2rem) clamp(1.25rem, 3vw, 2.5rem);
+          /* Centered container + card */
+          .container { width: min(980px, 96vw); }
+          .card {
+            background: #ffffff; /* <- white / light background as requested */
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18);
+            padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.25rem, 3vw, 2.5rem);
           }
 
-          /* --- Typography --- */
-          h1{
-            margin:.2rem 0 0.75rem 0;
-            font-size: clamp(2rem, 4vw, 3.25rem);
-            line-height:1.05;
-            letter-spacing:.2px;
-            background: linear-gradient(90deg, #fff, #ffe4e6 55%, #e9d5ff);
-            -webkit-background-clip:text; background-clip:text; color:transparent;
+          /* Headline centered and bold */
+          h1 {
+            margin: 0 0 .6rem 0;
+            text-align: center;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: .2px;
+            color: #0b1220;
           }
-          .muted{opacity:.9}
-
-          /* --- Details grid --- */
-          .details{ margin:1.25rem 0 0 0; padding:0; list-style:none; }
-          .details li{
-            display:grid; grid-template-columns: 220px 1fr; align-items:center;
-            gap:1rem; padding: .35rem 0;
-            border-bottom:1px dashed rgba(255,255,255,.12);
-          }
-          .details li:last-child{border-bottom:none;}
-          .label{ font-weight:600; color:var(--muted); }
-          .value{
-            display:inline-flex; align-items:center; gap:.4rem;
-            padding:.25rem .55rem; border-radius:12px;
-            background: rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.18);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-            font-size:.95rem;
-          }
-          .pills{ display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem;}
-          .pill{
-            padding:.35rem .65rem; border-radius:999px; font-size:.9rem; font-weight:600;
-            background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
-            border:1px solid rgba(255,255,255,.18);
+          .subtitle {
+            text-align: center;
+            color: #475569;
+            margin: 0 0 2rem 0;
+            font-weight: 600;
           }
 
-          /* Accents for certain values */
-          .pod{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
-                           linear-gradient(135deg, var(--rose), transparent);
-                background-blend-mode: overlay; }
-          .node{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
-                            linear-gradient(135deg, var(--indigo), transparent);
-                 background-blend-mode: overlay; }
-          .time{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
-                            linear-gradient(135deg, var(--amber), transparent);
-                 background-blend-mode: overlay; }
+          /* Details section — bold, clean, accessible */
+          .details {
+            display: grid; gap: .85rem;
+            margin: 0; padding: 0; list-style: none;
+          }
+          .row {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px dashed #e5e7eb;
+            padding-bottom: .75rem;
+          }
+          .row:last-child { border-bottom: none; }
+          .label {
+            font-weight: 800; /* bolder labels */
+            color: #111827;
+          }
+          .chip {
+            display: inline-flex; align-items: center; gap: .5rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            font-weight: 700;  /* bolder values */
+            padding: .4rem .65rem;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #f8fafc; /* light gray chip */
+            color: #0f172a;
+          }
+          .chip.red   { border-color: #fecaca; background: #fff1f2; }
+          .chip.indigo{ border-color: #c7d2fe; background: #eef2ff; }
+          .chip.amber { border-color: #fde68a; background: #fffbeb; }
 
-          @media (max-width: 640px){
-            .details li{ grid-template-columns: 1fr; }
+          /* Footer pills */
+          .pills { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
+          .pill {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            padding: .4rem .7rem;
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          @media (max-width: 640px) {
+            .row { grid-template-columns: 1fr; gap: .4rem; }
+            .label { margin-top: .25rem; }
           }
         </style>
       </head>
       <body>
-        <div class="frame">
+        <div class="container">
           <main class="card">
             <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
-            <p class="muted">Served by <strong>NGINX (non-root)</strong> inside your OpenShift cluster.</p>
+            <p class="subtitle">Served by <strong>NGINX (non-root)</strong> inside your OpenShift cluster.</p>
 
             <ul class="details">
-              <li>
+              <li class="row">
                 <span class="label">Cluster Name</span>
-                <span class="value">{{ .Values.clusterName }}</span>
+                <span class="chip">{{ .Values.clusterName }}</span>
               </li>
-              <li>
+              <li class="row">
                 <span class="label">Namespace</span>
-                <span class="value">{{ .Values.namespace | default .Release.Namespace }}</span>
+                <span class="chip">{{ .Values.namespace | default .Release.Namespace }}</span>
               </li>
-              <li>
+              <li class="row">
                 <span class="label">Pod Name</span>
-                <span class="value pod">__POD_NAME__</span>
+                <span class="chip red">__POD_NAME__</span>
               </li>
-              <li>
+              <li class="row">
                 <span class="label">Node Name</span>
-                <span class="value node">__NODE_NAME__</span>
+                <span class="chip indigo">__NODE_NAME__</span>
               </li>
-              <li>
+              <li class="row">
                 <span class="label">Served At (UTC)</span>
-                <span class="value time">__SERVED_AT__</span>
+                <span class="chip amber">__SERVED_AT__</span>
               </li>
             </ul>
 
             <div class="pills">
-              <span class="pill">Replica: <strong>__POD_NAME__</strong></span>
-              <span class="pill">Project: <strong>{{ .Values.namespace | default .Release.Namespace }}</strong></span>
+              <span class="pill">Replica: __POD_NAME__</span>
+              <span class="pill">Project: {{ .Values.namespace | default .Release.Namespace }}</span>
             </div>
           </main>
         </div>
