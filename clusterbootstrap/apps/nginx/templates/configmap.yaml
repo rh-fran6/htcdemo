@@ -4,73 +4,159 @@ metadata:
   name: nginx-content
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
-  # Use this as a template and render to /usr/share/nginx/html/index.html at container start
   index.html.tmpl: |
     <!doctype html>
     <html lang="en">
       <head>
-        <meta charset="utf-8">
-        <title>Welcome to OpenShift NGINX 🚀</title>
+        <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>OpenShift NGINX Demo</title>
         <style>
-          :root { --bg1:#ee0000; --bg2:#c41212; --ink:#ffffff; --accent:#ffeb3b; }
-          * { box-sizing: border-box; }
-          body {
-            margin: 0; min-height: 100vh; color: var(--ink);
-            background: radial-gradient(1200px 600px at 10% 10%, #ff5959, var(--bg1)) fixed,
-                        linear-gradient(135deg, var(--bg1), var(--bg2)) fixed;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            display:flex; align-items:center; justify-content:center; padding: 2rem;
+          /* --- Color system --- */
+          :root{
+            --red-1:#ef4444;   /* primary red */
+            --red-2:#dc2626;   /* deep red */
+            --rose:#f43f5e;    /* rose accent */
+            --violet:#7c3aed;  /* complementary violet */
+            --indigo:#4f46e5;  /* cool indigo */
+            --mint:#10b981;    /* mint accent */
+            --amber:#f59e0b;   /* warm accent */
+            --ink:#ffffff;
+            --muted:#e5e7eb;
           }
-          .card {
-            background: rgba(255,255,255,0.08);
-            border-radius: 16px; padding: 2rem 2.4rem; max-width: 980px; width: 100%;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+
+          /* --- Layout background with soft animated gradient --- */
+          html,body{height:100%}
+          body{
+            margin:0; color:var(--ink);
+            font-family: system-ui, -apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+            display:flex; align-items:center; justify-content:center; padding:2rem;
+            background:
+              radial-gradient(1200px 600px at 10% 10%, rgba(255,255,255,.08), transparent 60%),
+              radial-gradient(900px 500px at 90% 20%, rgba(255,255,255,.06), transparent 60%),
+              linear-gradient(135deg, var(--red-1), var(--rose), var(--violet), var(--indigo));
+            background-size: 100% 100%, 100% 100%, 200% 200%;
+            animation: bgshift 28s ease-in-out infinite alternate;
           }
-          h1 { font-size: clamp(2rem, 4vw, 3.25rem); margin: 0 0 .5rem 0; }
-          p  { font-size: 1.15rem; margin: 0 0 1.5rem 0; }
-          ul { line-height: 1.85; font-size: 1.05rem; padding-left: 1.25rem; }
-          code { background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 6px; color: var(--accent); }
-          .pills { margin-top: 1rem; display:flex; gap:.5rem; flex-wrap: wrap; }
-          .pill { display:inline-block; padding:.35rem .7rem; border-radius:999px; background:rgba(255,255,255,0.12); font-size:.95rem; }
-          .muted { opacity: .85; }
+          @keyframes bgshift { to { background-position: 0 0, 0 0, 100% 0; } }
+
+          /* Decorative soft orbs */
+          body::before, body::after{
+            content:""; position:fixed; pointer-events:none; filter: blur(60px); opacity:.35;
+            width:360px; height:360px; border-radius:50%;
+            z-index:0;
+          }
+          body::before{ background:linear-gradient(135deg, var(--amber), var(--rose)); top:-80px; left:-80px;}
+          body::after{  background:linear-gradient(135deg, var(--mint), var(--indigo)); bottom:-80px; right:-80px;}
+
+          /* --- Card with gradient border (glass) --- */
+          .frame{
+            position:relative; z-index:1; max-width:960px; width:min(960px, 96vw);
+            padding:1.2px; border-radius:18px;
+            background:linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.15));
+          }
+          .card{
+            border-radius:17px;
+            background: rgba(255,255,255,.10);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 18px 40px rgba(0,0,0,.35);
+            padding: clamp(1.25rem, 2.5vw, 2rem) clamp(1.25rem, 3vw, 2.5rem);
+          }
+
+          /* --- Typography --- */
+          h1{
+            margin:.2rem 0 0.75rem 0;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            line-height:1.05;
+            letter-spacing:.2px;
+            background: linear-gradient(90deg, #fff, #ffe4e6 55%, #e9d5ff);
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+          }
+          .muted{opacity:.9}
+
+          /* --- Details grid --- */
+          .details{ margin:1.25rem 0 0 0; padding:0; list-style:none; }
+          .details li{
+            display:grid; grid-template-columns: 220px 1fr; align-items:center;
+            gap:1rem; padding: .35rem 0;
+            border-bottom:1px dashed rgba(255,255,255,.12);
+          }
+          .details li:last-child{border-bottom:none;}
+          .label{ font-weight:600; color:var(--muted); }
+          .value{
+            display:inline-flex; align-items:center; gap:.4rem;
+            padding:.25rem .55rem; border-radius:12px;
+            background: rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.18);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+            font-size:.95rem;
+          }
+          .pills{ display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem;}
+          .pill{
+            padding:.35rem .65rem; border-radius:999px; font-size:.9rem; font-weight:600;
+            background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+            border:1px solid rgba(255,255,255,.18);
+          }
+
+          /* Accents for certain values */
+          .pod{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
+                           linear-gradient(135deg, var(--rose), transparent);
+                background-blend-mode: overlay; }
+          .node{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
+                            linear-gradient(135deg, var(--indigo), transparent);
+                 background-blend-mode: overlay; }
+          .time{ background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.08)),
+                            linear-gradient(135deg, var(--amber), transparent);
+                 background-blend-mode: overlay; }
+
+          @media (max-width: 640px){
+            .details li{ grid-template-columns: 1fr; }
+          }
         </style>
       </head>
       <body>
-        <main class="card">
-          <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
-          <p class="muted">
-            Served by <strong>NGINX (non-root)</strong> inside your OpenShift cluster.
-          </p>
+        <div class="frame">
+          <main class="card">
+            <h1>🎉 OpenShift Demo Running on NGINX 🎉</h1>
+            <p class="muted">Served by <strong>NGINX (non-root)</strong> inside your OpenShift cluster.</p>
 
-          <h3>Cluster Details</h3>
-          <ul>
-            <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
-            <li><strong>Namespace:</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
-            <li><strong>Pod Name:</strong> <code>__POD_NAME__</code></li>
-            <li><strong>Node Name:</strong> <code>__NODE_NAME__</code></li>
-            <li><strong>Served At (UTC):</strong> <code>__SERVED_AT__</code></li>
-          </ul>
+            <ul class="details">
+              <li>
+                <span class="label">Cluster Name</span>
+                <span class="value">{{ .Values.clusterName }}</span>
+              </li>
+              <li>
+                <span class="label">Namespace</span>
+                <span class="value">{{ .Values.namespace | default .Release.Namespace }}</span>
+              </li>
+              <li>
+                <span class="label">Pod Name</span>
+                <span class="value pod">__POD_NAME__</span>
+              </li>
+              <li>
+                <span class="label">Node Name</span>
+                <span class="value node">__NODE_NAME__</span>
+              </li>
+              <li>
+                <span class="label">Served At (UTC)</span>
+                <span class="value time">__SERVED_AT__</span>
+              </li>
+            </ul>
 
-          <div class="pills">
-            <span class="pill">Replica: <code>__POD_NAME__</code></span>
-            <span class="pill">Namespace: <code>{{ .Values.namespace | default .Release.Namespace }}</code></span>
-          </div>
-        </main>
+            <div class="pills">
+              <span class="pill">Replica: <strong>__POD_NAME__</strong></span>
+              <span class="pill">Project: <strong>{{ .Values.namespace | default .Release.Namespace }}</strong></span>
+            </div>
+          </main>
+        </div>
       </body>
     </html>
 
-  # Minimal nginx conf (SSI not needed for env pattern)
   default.conf: |
     server {
       listen 8080;
       server_name _;
       root /usr/share/nginx/html;
       index index.html;
-
       add_header Cache-Control "no-store" always;
-
-      location / {
-        try_files $uri $uri/ =404;
-      }
+      location / { try_files $uri $uri/ =404; }
     }
