@@ -30,11 +30,11 @@ spec:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name          # ✅ pod name via Downward API (env)
+                  fieldPath: metadata.name          
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: spec.nodeName          # ✅ node name via Downward API (env)
+                  fieldPath: spec.nodeName         
           command: ["/bin/sh","-c"]
           args:
             - |
@@ -42,6 +42,7 @@ spec:
               cp /config/index.html.tmpl /usr/share/nginx/html/index.html
               sed -i "s|__POD_NAME__|${POD_NAME}|g" /usr/share/nginx/html/index.html
               sed -i "s|__NODE_NAME__|${NODE_NAME}|g" /usr/share/nginx/html/index.html
+              sed -i "s|__SERVED_AT__|${SERVED_AT}|g" /usr/share/nginx/html/index.html
               exec nginx -g 'daemon off;'
           ports:
             - name: http

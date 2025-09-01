@@ -46,7 +46,7 @@ data:
           <h3>Cluster Details</h3>
           <ul>
             <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
-            <li><strong>Project (Namespace):</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
+            <li><strong>Namespace:</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
             <li><strong>Pod Name:</strong> <code>__POD_NAME__</code></li>
             <li><strong>Node Name:</strong> <code>__NODE_NAME__</code></li>
             <li><strong>Served At (UTC):</strong> <code>__SERVED_AT__</code></li>

@@ -1,7 +1,7 @@
 
 namespace: app-a
 
-clusterName: "ocp-demo-cluster"
+clusterName: "demo-cluster"
 replicas: 2
 
 image:
