@@ -2,67 +2,50 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
-  labels: { app: nginx }
+  namespace: demo
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: 2
   selector:
     matchLabels: { app: nginx }
   template:
     metadata:
-      labels:
-        app: nginx
-        # Optional: if you want Zone to show, add this pod label (set it from values if you like)
-        # topology.kubernetes.io/zone: "zone-a"
+      labels: { app: nginx }
     spec:
       securityContext:
         runAsNonRoot: true
       volumes:
-        - name: html
+        - name: tpl
           configMap:
-            name: nginx-content
+            name: nginx-template
             items:
-              - key: index.html
-                path: index.html
-        - name: conf
-          configMap:
-            name: nginx-content
-            items:
-              - key: default.conf
-                path: default.conf
-        - name: podinfo
-          downwardAPI:
-            items:
-              - path: "podname"
-                fieldRef:
-                  fieldPath: metadata.name
-              - path: "namespace"
-                fieldRef:
-                  fieldPath: metadata.namespace
-              # Zone only works if the POD has that label (not the node).
-              - path: "zone"
-                fieldRef:
-                  fieldPath: "metadata.labels['topology.kubernetes.io/zone']"
+              - key: index.html.tmpl
+                path: index.html.tmpl
+        - name: webroot
+          emptyDir: {}
       containers:
         - name: nginx
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: nginxinc/nginx-unprivileged:stable-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name          # ✅ pod name via Downward API (env)
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName          # ✅ node name via Downward API (env)
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              set -e
+              cp /config/index.html.tmpl /usr/share/nginx/html/index.html
+              sed -i "s|__POD_NAME__|${POD_NAME}|g" /usr/share/nginx/html/index.html
+              sed -i "s|__NODE_NAME__|${NODE_NAME}|g" /usr/share/nginx/html/index.html
+              exec nginx -g 'daemon off;'
           ports:
             - name: http
               containerPort: 8080
-          readinessProbe:
-            httpGet: { path: "/", port: 8080 }
-            initialDelaySeconds: 5
-          livenessProbe:
-            httpGet: { path: "/", port: 8080 }
-            initialDelaySeconds: 15
           volumeMounts:
-            - name: html
-              mountPath: /usr/share/nginx/html
-              readOnly: true
-            - name: conf
-              mountPath: /etc/nginx/conf.d
-              readOnly: true
-            - name: podinfo
-              mountPath: /etc/podinfo
-              readOnly: true
+            - { name: tpl,     mountPath: /config,                 readOnly: true }
+            - { name: webroot, mountPath: /usr/share/nginx/html }  # writable webroot

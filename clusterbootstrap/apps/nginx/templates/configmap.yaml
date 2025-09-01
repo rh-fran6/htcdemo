@@ -4,7 +4,8 @@ metadata:
   name: nginx-content
   namespace: {{ .Values.namespace | default .Release.Namespace }}
 data:
-  index.html: |
+  # Use this as a template and render to /usr/share/nginx/html/index.html at container start
+  index.html.tmpl: |
     <!doctype html>
     <html lang="en">
       <head>
@@ -46,31 +47,26 @@ data:
           <ul>
             <li><strong>Cluster Name:</strong> {{ .Values.clusterName }}</li>
             <li><strong>Project (Namespace):</strong> {{ .Values.namespace | default .Release.Namespace }}</li>
-            <li><strong>Pod Name:</strong> <code><!--# include file="/etc/podinfo/podname" --></code></li>
-            <li><strong>Hostname (pod):</strong> <code><!--# echo var="hostname" --></code></li>
-            <!-- Zone only renders if you label the pod with topology.kubernetes.io/zone -->
-            <li><strong>Zone:</strong> <code><!--# include file="/etc/podinfo/zone" --></code></li>
-            <li><strong>Served At (GMT):</strong> <code><!--# echo var="date_gmt" --></code></li>
+            <li><strong>Pod Name:</strong> <code>__POD_NAME__</code></li>
+            <li><strong>Node Name:</strong> <code>__NODE_NAME__</code></li>
+            <li><strong>Served At (UTC):</strong> <code>__SERVED_AT__</code></li>
           </ul>
 
           <div class="pills">
-            <span class="pill">Replica: <code><!--# include file="/etc/podinfo/podname" --></code></span>
-            <span class="pill">Namespace: <code><!--# include file="/etc/podinfo/namespace" --></code></span>
+            <span class="pill">Replica: <code>__POD_NAME__</code></span>
+            <span class="pill">Namespace: <code>{{ .Values.namespace | default .Release.Namespace }}</code></span>
           </div>
         </main>
       </body>
     </html>
+
+  # Minimal nginx conf (SSI not needed for env pattern)
   default.conf: |
     server {
       listen 8080;
       server_name _;
       root /usr/share/nginx/html;
       index index.html;
-
-      # Enable Server Side Includes to render downward API files & time
-      ssi on;
-      ssi_types text/html;
-      ssi_silent_errors on;
 
       add_header Cache-Control "no-store" always;
 
