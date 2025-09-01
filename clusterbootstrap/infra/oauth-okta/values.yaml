@@ -12,3 +12,4 @@ okta:
   client_id: 3rOHRME5539iu8qHXMakc2WWjBddnWZg
   client_secret_name: okta-login-secret
   issuer: https://dev-z00fxud7wzbzsz10.us.auth0.com
+

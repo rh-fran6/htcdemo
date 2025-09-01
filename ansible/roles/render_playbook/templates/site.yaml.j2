@@ -187,6 +187,11 @@
             sso:
               dex:
                 openShiftOAuth: true
+                groups:
+                  - admin-team
+                  - devops-team
+                  - app-a-team
+                  - noc-team
                 resources:
                   limits:
                     cpu: 500m
@@ -253,8 +258,7 @@
               scopes: '{{ rbac_scopes }}'
               defaultPolicy: '{{ rbac_default_policy }}'
               policy: |
-                g, user:kube:admin, role:admin
-                g, EglvcGVuc2hpZnQ, role:admin
+                g, system:cluster-admins, role:admin
 {# Build Casbin policy lines with consistent indentation under the block scalar #}
 {% set lines = [] -%}
 {% for g in rbac_groups | default([]) -%}
