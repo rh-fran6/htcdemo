@@ -1,6 +1,6 @@
 rbac_groups:
   admin-team:
-    - fanyaegbu@redhat.com
+    - fanyaegb@redhat.com
     - testuser@redhat.com
   devops-team: []
   app-a-team:
