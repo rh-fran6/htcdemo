@@ -68,19 +68,7 @@ bootstrap_target_revision: "main"
 bootstrap_path: "bootstrap"                  
 bootstrap_project: "platform"   
 
-# {% for g in rbac_groups | default([]) %}
-#     - name: Ensure OpenShift group {{ g.name }} exists
-#       kubernetes.core.k8s:
-#         kubeconfig: "{{ kubeconfig }}"
-#         state: present
-#         merge_type: merge
-#         definition:
-#           apiVersion: user.openshift.io/v1
-#           kind: Group
-#           metadata:
-#             name: "{{ g.name }}"
-#           users: [{{ g.users | map('quote') | join(', ') }}]
-# {% endfor %}
+
 
 
 

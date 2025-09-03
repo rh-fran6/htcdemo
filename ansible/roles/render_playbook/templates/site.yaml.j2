@@ -22,6 +22,8 @@
           kind: Namespace
           metadata:
             name: "{{ ns }}"
+            labels:
+              argocd.argoproj.io/managed-by: "{{ argocd_namespace }}"
 {% endfor %}
 
 {# --------------------- NAMESPACES (apps list) --------------------- #}
@@ -35,6 +37,8 @@
           kind: Namespace
           metadata:
             name: "{{ ns }}"
+            labels:
+              argocd.argoproj.io/managed-by: "{{ argocd_namespace }}"
 {% endfor %}
 
     - name: Ensure AWS SM creds Secret exists (only when requested)
@@ -95,6 +99,8 @@
           kind: Namespace
           metadata:
             name: "openshift-operators"
+            labels:
+              argocd.argoproj.io/managed-by: "{{ argocd_namespace }}"
 
     - name: Subscribe to OpenShift GitOps operator
       kubernetes.core.k8s:
@@ -262,7 +268,7 @@
 {# Build Casbin policy lines with consistent indentation under the block scalar #}
 {% set lines = [] -%}
 {% for g in rbac_groups | default([]) -%}
-{% set _ = lines.append('g, group:' ~ g.name ~ ', role:' ~ g.role) -%}
+{% set _ = lines.append('g, ' ~ g.name ~ ', role:' ~ g.role) -%}
 {% endfor -%}
 {% for r in rbac_roles | default([]) -%}
 {% for p in r.permissions | default([]) -%}
@@ -342,7 +348,7 @@
           spec:
             description: "Application A workloads"
             destinations:
-              - namespace: "{{ app_a_namespace }}"
+              - namespace: "*"
                 server: https://kubernetes.default.svc
             sourceRepos:
               - '*'
@@ -366,12 +372,8 @@
           spec:
             description: "Business app workloads (NOC read-only)"
             destinations:
-              - namespace: "{{ app_a_namespace }}"
+              - namespace: "*"
                 server: https://kubernetes.default.svc
-{% for ns in apps_namespaces | default([]) %}
-              - namespace: "{{ ns }}"
-                server: https://kubernetes.default.svc
-{% endfor %}
             sourceRepos:
               - '*'
             clusterResourceWhitelist:
