@@ -3,3 +3,5 @@ kind: OperatorGroup
 metadata:
   name: {{ .Values.namespace }}
   namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
