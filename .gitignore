@@ -5,3 +5,4 @@ ansible/collections/
 ansible/ansible.cfg
 archive/
 secrets/secrets.yaml
+*.json
